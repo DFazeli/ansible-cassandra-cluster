@@ -1,0 +1,32 @@
+---
+
+- name: --- Download JDK {{general_config.java_version.name}}_{{general_config.java_version.version}}.{{general_config.java_version.extension}}----
+  get_url:
+     url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{general_config.java_version.name}}-{{general_config.java_version.version}}.{{general_config.java_version.extension}}"
+     dest: /opt/
+
+- name: --- extract archive java ---
+  unarchive:
+    src: "/opt/{{general_config.java_version.name}}-{{general_config.java_version.version}}.{{general_config.java_version.extension}}"
+    dest: /usr/local/bin/
+    remote_src: yes
+    list_files: yes
+  register: archive_java_contents
+
+- name: --- debug ---
+  debug:
+      msg: "{{ archive_java_contents.files[0] }}"
+
+
+- name: update alternatives for java
+  alternatives:
+    name: java
+    path: "/usr/local/bin/{{ archive_java_contents.files[0] }}bin/java"
+    link: /usr/bin/java
+    priority: 20000
+
+- name: set java home as environment variable
+  blockinfile:
+      insertafter: EOF
+      path: /etc/environment
+      block: export JAVA_HOME=/usr/local/bin/{{ archive_java_contents.files[0] }}
