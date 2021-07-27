@@ -52,16 +52,18 @@
   when: "{{ general_config.create_data_disk.present }}"
 
 
-- name: --- Download cassandra packages ---
+- name: --- Download cassandra packages '{{ general_config.cassandra_version }}' ---
   get_url:
-    url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{general_config.cassandra_version.name}}.{{general_config.cassandra_version.version}}.{{general_config.cassandra_version.extension}}"
+    url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{ general_config.cassandra_version }}"
     dest: /opt/
 
-- name: --- extract archive cassandra ---
+- name: --- extract archive cassandra '{{ general_config.cassandra_version }}'---
   unarchive:
-    src: "/opt/{{general_config.cassandra_version.name}}.{{general_config.cassandra_version.version}}.{{general_config.cassandra_version.extension}}"
+    src: "/opt/{{ general_config.cassandra_version }}"
     dest: "/opt/"
     remote_src: yes 
+    list_files: yes
+  register: archive_cassandra_contents
 
 - name: Create group cassandra
   group:
@@ -80,7 +82,7 @@
 
 - name: Change owner and group cassandra directory
   file:
-    path: "/opt/{{general_config.cassandra_version.name}}.{{general_config.cassandra_version.ver}}"
+    path: "/opt/{{ archive_cassandra_contents.files[0].split('/')[0] }}"
     owner: cassandra
     group: cassandra
     recurse: yes
@@ -88,7 +90,7 @@
  
 - name: Create symbolic link [cassandra] 
   file:
-    src: "/opt/{{general_config.cassandra_version.name}}.{{general_config.cassandra_version.ver}}"
+    src: "/opt/{{ archive_cassandra_contents.files[0].split('/')[0] }}"
     dest: "/opt/cassandra"
     state: link
 
